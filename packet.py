@@ -29,11 +29,11 @@ class StructWithDefault(ctypes.Structure):
 
 class StructSerial(object):
     def __init__(self, fields):
-        object.__setattr__(self, 'attr', OrderedDict())
+        self.__dict__['attr'] = OrderedDict()
         for k, v in fields:
             self.attr[k] = v()
     def __getattr__(self, name):
-        if name in object.__getattribute__(self, 'attr'):
+        if name in self.attr:
             return self.attr[name]
         else:
             return None
@@ -50,9 +50,12 @@ class StructSerial(object):
             result += ctypes.string_at(ctypes.addressof(v), ctypes.sizeof(v))
         return result
 
-# example
-
 def test():
+    """
+        example
+    """
+
+    # 构建字段类序
     class struct_1(StructWithDefault):
         _pack_ = 4
         fields_desc = [
@@ -62,10 +65,13 @@ def test():
             ('c3', (ctypes.c_uint16, 0x8899)),
         ]
     
+    # 构建数据包结构
+    # 变长类型放在这一层解决
     s = StructSerial([
             ('f1', struct_1),
             ('f2', partial(struct_1, 0x66aaaa55, c3=0xbbdd)),
         ])
+
     s.f1.test = 0x99887766
     print(hex(s.f1.test))
     print(raw(s.f2).encode('hex'))
