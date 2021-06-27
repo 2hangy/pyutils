@@ -38,9 +38,8 @@ class StructSerial(object):
         else:
             return None
     def __setattr__(self, key, value):
-        if key in self.attr and \
-           type(value) == type(self.attr[key]):
-            self.attr[key] = value
+        if key in self.attr:
+            setattr(self.attr, key, value)
     def __iter__(self):
         return iter(self.attr.copy())
     def raw(self):
@@ -49,6 +48,13 @@ class StructSerial(object):
             v = getattr(self, k)
             result += ctypes.string_at(ctypes.addressof(v), ctypes.sizeof(v))
         return result
+
+def dyn_str(str_content):
+    dyn_serial = StructSerial([
+        ('len', partial(ctypes.c_uint32, len(str_content))),
+        ('content', partial(ctypes.create_string_buffer, str_content, len(str_content))),
+        ])
+    return dyn_serial.raw()
 
 def test():
     """
